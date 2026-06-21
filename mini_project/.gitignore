@@ -1,0 +1,64 @@
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Model artifacts
+*.pkl
+*.joblib
+*.h5
+*.pth
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+.env
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Data exports
+exports/
+*.csv
+output/
+
+# Logs
+logs/
+*.log
+
+# Cache
+.cache/
+*.cache
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Temporary
+tmp/
+temp/
+*.tmp
