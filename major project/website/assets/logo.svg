@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40" viewBox="0 0 240 80" role="img" aria-label="TrendInsight logo">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#0ea5a4" />
+      <stop offset="1" stop-color="#0b2545" />
+    </linearGradient>
+  </defs>
+  <rect width="80" height="80" rx="14" fill="url(#g)" />
+  <path d="M20 50 L36 28 L52 44 L68 22" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <text x="98" y="48" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="28" fill="#0b2545">TrendInsight</text>
+</svg>
