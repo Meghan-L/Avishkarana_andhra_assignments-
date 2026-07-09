@@ -1,11 +1,9 @@
 {
   "version": 2,
-  "name": "trendinsight-website",
   "builds": [
-    { "src": "website/**", "use": "@vercel/static" }
+    { "src": "**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "^/$", "dest": "/website/index.html" },
-    { "src": "/(.*)", "dest": "/website/$1" }
+    { "src": "^/$", "dest": "/website/index.html" }
   ]
 }
