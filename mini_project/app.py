@@ -24,6 +24,121 @@ logger = logging.getLogger(__name__)
 DB_PATH = "retail_demand_forecast.db"
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
+
+def ensure_database_ready():
+    """Create the SQLite database and seed tables when hosting on a fresh environment."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_name TEXT NOT NULL,
+            category TEXT NOT NULL,
+            unit_price REAL NOT NULL,
+            lead_time_days INTEGER NOT NULL DEFAULT 7,
+            safety_stock_units INTEGER NOT NULL DEFAULT 50,
+            current_inventory INTEGER NOT NULL DEFAULT 100,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sales_transactions (
+            transaction_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            quantity_sold INTEGER NOT NULL,
+            sale_price REAL NOT NULL,
+            transaction_date DATE NOT NULL,
+            day_of_week TEXT NOT NULL
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS forecasted_demand (
+            forecast_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            forecast_date DATE NOT NULL,
+            predicted_quantity INTEGER NOT NULL,
+            confidence_interval_lower REAL,
+            confidence_interval_upper REAL,
+            forecast_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reorder_alerts (
+            alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            product_name TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'Unknown',
+            reorder_point INTEGER NOT NULL,
+            current_inventory INTEGER NOT NULL,
+            predicted_demand_7day INTEGER NOT NULL,
+            days_inventory_remaining INTEGER NOT NULL DEFAULT 0,
+            lead_time_days INTEGER NOT NULL DEFAULT 7,
+            safety_stock_units INTEGER NOT NULL DEFAULT 50,
+            alert_status TEXT NOT NULL,
+            action_required INTEGER DEFAULT 1,
+            alert_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+        conn.commit()
+
+        if pd.read_sql_query("SELECT COUNT(*) as count FROM products", conn).iloc[0]['count'] == 0:
+            products = [
+                (1, 'Product_A1', 'Electronics', 199.99, 5, 40, 140),
+                (2, 'Product_B2', 'Home & Garden', 89.99, 7, 35, 180),
+                (3, 'Product_C3', 'Sports', 59.99, 4, 25, 110),
+                (4, 'Product_D4', 'Fashion', 39.99, 6, 20, 95),
+                (5, 'Product_E5', 'Food & Beverage', 12.99, 3, 18, 120),
+            ]
+            cursor.executemany(
+                "INSERT INTO products (product_id, product_name, category, unit_price, lead_time_days, safety_stock_units, current_inventory) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                products,
+            )
+
+        if pd.read_sql_query("SELECT COUNT(*) as count FROM sales_transactions", conn).iloc[0]['count'] == 0:
+            from random import randint
+            today = datetime.now().date()
+            for product_id in range(1, 6):
+                for offset in range(30):
+                    day = today - timedelta(days=offset)
+                    qty = 8 + (product_id * 2) + (offset % 5)
+                    cursor.execute(
+                        "INSERT INTO sales_transactions (product_id, quantity_sold, sale_price, transaction_date, day_of_week) VALUES (?, ?, ?, ?, ?)",
+                        (product_id, qty, 10.0 + product_id, day, day.strftime('%A')),
+                    )
+
+        if pd.read_sql_query("SELECT COUNT(*) as count FROM forecasted_demand", conn).iloc[0]['count'] == 0:
+            for product_id in range(1, 6):
+                for day_ahead in range(1, 8):
+                    forecast_date = datetime.now().date() + timedelta(days=day_ahead)
+                    qty = 10 + product_id * 3 + day_ahead
+                    cursor.execute(
+                        "INSERT INTO forecasted_demand (product_id, forecast_date, predicted_quantity, confidence_interval_lower, confidence_interval_upper, forecast_created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (product_id, forecast_date, qty, max(1, qty - 2), qty + 2, datetime.now()),
+                    )
+
+        if pd.read_sql_query("SELECT COUNT(*) as count FROM reorder_alerts", conn).iloc[0]['count'] == 0:
+            for product_id in range(1, 6):
+                cursor.execute(
+                    "INSERT INTO reorder_alerts (product_id, product_name, category, reorder_point, current_inventory, predicted_demand_7day, days_inventory_remaining, lead_time_days, safety_stock_units, alert_status, action_required) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (product_id, f'Product_{"A" if product_id == 1 else "B" if product_id == 2 else "C" if product_id == 3 else "D" if product_id == 4 else "E"}{product_id}', 'Demo', 50 + product_id * 5, 30 + product_id * 10, 40 + product_id * 5, 3 + product_id, 5, 7, 20, 'CRITICAL RESTOCK' if product_id < 3 else 'WATCHLIST', 1 if product_id < 3 else 0),
+                )
+
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        logger.warning(f"Database bootstrap failed: {str(e)}")
+        return False
+
+
+ensure_database_ready()
+
 # Page configuration
 st.set_page_config(
     page_title="Retail Demand Forecasting & Inventory Control",
@@ -165,6 +280,7 @@ def get_db_connection():
 @st.cache_data(ttl=3600)
 def load_alerts():
     """Load reorder alerts from database with compatibility for the current schema."""
+    ensure_database_ready()
     try:
         conn = sqlite3.connect(DB_PATH)
         table_exists = pd.read_sql_query("SELECT name FROM sqlite_master WHERE type='table' AND name='reorder_alerts'", conn)
@@ -206,6 +322,7 @@ def load_alerts():
 @st.cache_data(ttl=3600)
 def load_forecasts():
     """Load demand forecasts from database."""
+    ensure_database_ready()
     try:
         conn = sqlite3.connect(DB_PATH)
         query = """
@@ -228,6 +345,7 @@ def load_forecasts():
 @st.cache_data(ttl=3600)
 def load_historical_sales():
     """Load historical sales data for comparison."""
+    ensure_database_ready()
     try:
         conn = sqlite3.connect(DB_PATH)
         query = """
@@ -250,6 +368,7 @@ def load_historical_sales():
 @st.cache_data(ttl=3600)
 def load_products():
     """Load product catalog."""
+    ensure_database_ready()
     try:
         conn = sqlite3.connect(DB_PATH)
         products_df = pd.read_sql_query("SELECT * FROM products;", conn)
