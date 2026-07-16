@@ -1,0 +1,14 @@
+Fraud vs Merchant Category Chi-Square Test
+chi2 = 3.7840
+p-value = 0.5809
+degrees of freedom = 5
+
+Cross-tabulation:
+is_fraud              0   1
+merchant_category          
+electronics        1590  23
+entertainment      1555  33
+grocery            1586  21
+healthcare         1607  26
+travel             1553  26
+utilities          1453  27

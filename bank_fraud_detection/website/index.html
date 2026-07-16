@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bank Fraud Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="brand">
+          <div class="logo-mark">B</div>
+          <div>
+            <div class="brand-name">Bank Fraud Detection</div>
+            <div class="brand-tag">Fraud intelligence for modern banking teams</div>
+          </div>
+        </div>
+        <nav class="main-nav" role="navigation" aria-label="Main menu">
+          <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#workflow">Workflow</a></li>
+            <li><a href="#results">Insights</a></li>
+            <li><a href="#docs">Docs</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div class="hero-content">
+            <div class="eyebrow">AI-Powered Risk Monitoring</div>
+            <h1 class="hero-title">Detect suspicious activity before it becomes a loss.</h1>
+            <p class="hero-sub">This project combines synthetic banking data, fraud signals, and analytical storytelling into a polished, presentation-ready fraud detection experience.</p>
+            <div class="hero-cta">
+              <a class="btn btn-primary" href="#results">Explore Insights</a>
+              <a class="btn btn-ghost" href="#workflow">See Workflow</a>
+            </div>
+            <div class="pill-row">
+              <span class="pill">9,500 Transactions</span>
+              <span class="pill">800 Customers</span>
+              <span class="pill">8% Risk Signal</span>
+            </div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-card-title">Risk Snapshot</div>
+            <div class="hero-card-grid">
+              <div class="stat">
+                <div class="stat-value">92%</div>
+                <div class="stat-label">Pattern Coverage</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">4.2x</div>
+                <div class="stat-label">Higher Risk</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">24/7</div>
+                <div class="stat-label">Monitoring Ready</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="container">
+        <section id="overview" class="card card-grid">
+          <div>
+            <h2>Project Overview</h2>
+            <p>This dashboard-style experience simulates realistic banking behavior, highlights suspicious transaction patterns, and packages the results into a clean, business-friendly story.</p>
+          </div>
+          <div class="bullet-stack">
+            <div class="bullet-card"><strong>Dataset</strong><span>9,500 synthetic transactions</span></div>
+            <div class="bullet-card"><strong>Focus</strong><span>Fraud detection and risk segmentation</span></div>
+            <div class="bullet-card"><strong>Output</strong><span>Charts, SQL, and analytics notes</span></div>
+          </div>
+        </section>
+
+        <section id="workflow" class="card">
+          <h2>Workflow</h2>
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-number">01</div>
+              <h3>Generate</h3>
+              <p>Create synthetic bank transactions with realistic fraud scenarios and customer behavior.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">02</div>
+              <h3>Clean</h3>
+              <p>Engineer fraud features, normalize transaction states, and build analytics tables.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">03</div>
+              <h3>Analyze</h3>
+              <p>Surface fraud patterns, high-risk transactions, and executive-ready findings.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="results" class="card">
+          <div class="section-header">
+            <h2>Fraud Insights</h2>
+            <p>Visual outputs from the analysis workflow.</p>
+          </div>
+          <div class="image-grid">
+            <div class="image-item">
+              <h3>Type vs Fraud</h3>
+              <img src="../data/processed/transaction_type_fraud.png" alt="Transaction type fraud chart" />
+            </div>
+            <div class="image-item">
+              <h3>Amount Distribution</h3>
+              <img src="../data/processed/amount_distribution.png" alt="Transaction amount distribution" />
+            </div>
+          </div>
+          <div class="insight-box">Fraud analysis is ready for review with statistical summaries and transaction-level signals.</div>
+        </section>
+
+        <section id="docs" class="card">
+          <h2>Project Files</h2>
+          <div class="files-grid">
+            <a class="file" href="../README.md" target="_blank">README</a>
+            <a class="file" href="../scripts/generate_data.py" target="_blank">generate_data.py</a>
+            <a class="file" href="../scripts/clean_data.py" target="_blank">clean_data.py</a>
+            <a class="file" href="../scripts/eda.py" target="_blank">eda.py</a>
+            <a class="file" href="../scripts/statistics_report.py" target="_blank">statistics_report.py</a>
+            <a class="file" href="../database/queries.sql" target="_blank">queries.sql</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>Modern fraud analytics experience built for secure, insight-driven banking.</p>
+      </div>
+    </footer>
+  </body>
+</html>
