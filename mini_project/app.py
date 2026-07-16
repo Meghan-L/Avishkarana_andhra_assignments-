@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from sqlalchemy import create_engine
 import logging
+from sql_action_engine import build_simple_forecasts_dataframe, build_simple_alerts_dataframe
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -195,6 +196,8 @@ def load_alerts():
         query = f"SELECT {', '.join(select_columns)} FROM reorder_alerts{order_clause} LIMIT 100;"
         alerts_df = pd.read_sql_query(query, conn)
         conn.close()
+        if alerts_df.empty:
+            return build_simple_alerts_dataframe()
         return alerts_df
     except Exception as e:
         st.error(f"Error loading alerts: {str(e)}")
@@ -215,6 +218,8 @@ def load_forecasts():
         """
         forecasts_df = pd.read_sql_query(query, conn)
         conn.close()
+        if forecasts_df.empty:
+            return build_simple_forecasts_dataframe()
         return forecasts_df
     except Exception as e:
         st.error(f"Error loading forecasts: {str(e)}")

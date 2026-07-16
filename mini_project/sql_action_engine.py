@@ -19,6 +19,100 @@ logger = logging.getLogger(__name__)
 DB_PATH = "retail_demand_forecast.db"
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
+def build_simple_forecasts_dataframe():
+    """Create a lightweight 7-day forecast directly from recent sales history."""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            products_df = pd.read_sql_query("SELECT product_id, product_name, category FROM products", conn)
+            sales_df = pd.read_sql_query(
+                "SELECT product_id, quantity_sold, transaction_date FROM sales_transactions ORDER BY transaction_date",
+                conn,
+            )
+
+        if products_df.empty or sales_df.empty:
+            return pd.DataFrame()
+
+        sales_df['transaction_date'] = pd.to_datetime(sales_df['transaction_date'], errors='coerce')
+        sales_df = sales_df.dropna(subset=['transaction_date'])
+
+        forecast_rows = []
+        for _, product in products_df.iterrows():
+            product_sales = sales_df[sales_df['product_id'] == product['product_id']].copy()
+            if product_sales.empty:
+                continue
+            recent_sales = product_sales.sort_values('transaction_date').tail(7)
+            avg_daily = recent_sales['quantity_sold'].mean() if not recent_sales.empty else 0
+            base_qty = max(1, int(round(avg_daily)))
+
+            for day_ahead in range(1, 8):
+                predicted_qty = max(1, int(round(base_qty * (1 + 0.02 * day_ahead))))
+                forecast_rows.append({
+                    'product_id': product['product_id'],
+                    'forecast_date': datetime.now().date() + timedelta(days=day_ahead),
+                    'predicted_quantity': predicted_qty,
+                    'confidence_interval_lower': max(1, int(round(predicted_qty * 0.8))),
+                    'confidence_interval_upper': max(1, int(round(predicted_qty * 1.2))),
+                    'forecast_created_at': datetime.now(),
+                })
+
+        return pd.DataFrame(forecast_rows)
+    except Exception as e:
+        logger.warning(f"Falling back to simple forecast generation: {str(e)}")
+        return pd.DataFrame()
+
+
+def build_simple_alerts_dataframe():
+    """Create simple reorder alerts directly from current inventory and recent demand."""
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            products_df = pd.read_sql_query(
+                "SELECT product_id, product_name, category, current_inventory, lead_time_days, safety_stock_units FROM products",
+                conn,
+            )
+
+        if products_df.empty:
+            return pd.DataFrame()
+
+        forecasts_df = build_simple_forecasts_dataframe()
+        if forecasts_df.empty:
+            return pd.DataFrame()
+
+        alerts = []
+        for _, product in products_df.iterrows():
+            product_forecast = forecasts_df[forecasts_df['product_id'] == product['product_id']]
+            if product_forecast.empty:
+                continue
+            avg_daily_forecast = product_forecast['predicted_quantity'].mean()
+            reorder_point = int(round((avg_daily_forecast * product['lead_time_days']) + product['safety_stock_units']))
+            days_inventory_remaining = int(round(product['current_inventory'] / avg_daily_forecast)) if avg_daily_forecast > 0 else 999
+
+            if product['current_inventory'] < reorder_point:
+                alert_status = 'CRITICAL RESTOCK'
+            elif product['current_inventory'] < (reorder_point * 1.25):
+                alert_status = 'WATCHLIST'
+            else:
+                alert_status = 'HEALTHY'
+
+            alerts.append({
+                'product_id': product['product_id'],
+                'product_name': product['product_name'],
+                'category': product['category'],
+                'reorder_point': reorder_point,
+                'current_inventory': product['current_inventory'],
+                'predicted_demand_7day': int(round(product_forecast['predicted_quantity'].sum())),
+                'days_inventory_remaining': days_inventory_remaining,
+                'lead_time_days': product['lead_time_days'],
+                'safety_stock_units': product['safety_stock_units'],
+                'alert_status': alert_status,
+                'action_required': 1 if alert_status == 'CRITICAL RESTOCK' else 0,
+            })
+
+        return pd.DataFrame(alerts)
+    except Exception as e:
+        logger.warning(f"Falling back to simple alert generation: {str(e)}")
+        return pd.DataFrame()
+
+
 # SQL query to calculate reorder points and generate alerts
 REORDER_POINT_CALCULATION_QUERY = """
 WITH forecast_aggregation AS (
@@ -243,15 +337,22 @@ class SQLActionEngine:
         
         return summary
 
-def execute_action_engine(forecast_df):
-    """Execute the complete SQL Action Engine workflow."""
+def execute_action_engine(forecast_df=None):
+    """Execute a lightweight alert workflow without requiring a separate ML pipeline."""
     try:
+        if forecast_df is None:
+            forecast_df = build_simple_forecasts_dataframe()
+
+        if forecast_df.empty:
+            logger.warning("No forecast data available; falling back to lightweight forecast generation.")
+            forecast_df = build_simple_forecasts_dataframe()
+
         engine = SQLActionEngine()
-        
+
         # 1. Save forecasts to database
         engine.save_forecasts_to_database(forecast_df)
-        
-        # 2. Generate reorder alerts using advanced SQL
+
+        # 2. Generate reorder alerts using the current SQL logic
         alerts_df = engine.generate_reorder_alerts()
         
         # 3. Save alerts to database
