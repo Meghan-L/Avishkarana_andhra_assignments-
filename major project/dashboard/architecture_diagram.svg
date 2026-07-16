@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680">
+  <rect width="1200" height="680" fill="#f8fafc"/>
+  <rect x="80" y="70" width="220" height="90" rx="18" fill="#1d4ed8"/>
+  <text x="190" y="115" text-anchor="middle" font-family="Segoe UI, Arial" font-size="24" fill="white">Generate Data</text>
+  <rect x="360" y="70" width="220" height="90" rx="18" fill="#2563eb"/>
+  <text x="470" y="115" text-anchor="middle" font-family="Segoe UI, Arial" font-size="24" fill="white">Clean &amp; Normalize</text>
+  <rect x="640" y="70" width="220" height="90" rx="18" fill="#3b82f6"/>
+  <text x="750" y="115" text-anchor="middle" font-family="Segoe UI, Arial" font-size="24" fill="white">Processed Tables</text>
+  <rect x="350" y="260" width="240" height="110" rx="18" fill="#0f172a"/>
+  <text x="470" y="305" text-anchor="middle" font-family="Segoe UI, Arial" font-size="24" fill="white">SQL + EDA + Stats</text>
+  <rect x="360" y="460" width="220" height="90" rx="18" fill="#10b981"/>
+  <text x="470" y="505" text-anchor="middle" font-family="Segoe UI, Arial" font-size="24" fill="white">Executive Dashboard</text>
+  <line x1="300" y1="115" x2="360" y2="115" stroke="#334155" stroke-width="4"/>
+  <line x1="580" y1="115" x2="640" y2="115" stroke="#334155" stroke-width="4"/>
+  <line x1="750" y1="160" x2="470" y2="260" stroke="#334155" stroke-width="4"/>
+  <line x1="470" y1="370" x2="470" y2="460" stroke="#334155" stroke-width="4"/>
+  <text x="460" y="620" text-anchor="middle" font-family="Segoe UI, Arial" font-size="18" fill="#475569">End-to-end social intelligence workflow</text>
+</svg>
