@@ -4,6 +4,7 @@ Interactive dashboard for monitoring demand forecasts and inventory alerts.
 Single-file Streamlit application providing real-time operational intelligence.
 """
 
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -162,14 +163,36 @@ def get_db_connection():
 
 @st.cache_data(ttl=3600)
 def load_alerts():
-    """Load reorder alerts from database."""
+    """Load reorder alerts from database with compatibility for the current schema."""
     try:
         conn = sqlite3.connect(DB_PATH)
-        query = """
-        SELECT * FROM reorder_alerts 
-        ORDER BY alert_created_at DESC 
-        LIMIT 100;
-        """
+        table_exists = pd.read_sql_query("SELECT name FROM sqlite_master WHERE type='table' AND name='reorder_alerts'", conn)
+        if table_exists.empty:
+            conn.close()
+            return pd.DataFrame()
+
+        columns = pd.read_sql_query("PRAGMA table_info(reorder_alerts)", conn)
+        available = set(columns['name'])
+
+        select_columns = ['product_id', 'product_name', 'alert_status', 'current_inventory', 'reorder_point', 'predicted_demand_7day']
+        if 'category' in available:
+            select_columns.append('category')
+        if 'days_inventory_remaining' in available:
+            select_columns.append('days_inventory_remaining')
+        if 'lead_time_days' in available:
+            select_columns.append('lead_time_days')
+        if 'safety_stock_units' in available:
+            select_columns.append('safety_stock_units')
+        if 'alert_created_at' in available:
+            select_columns.append('alert_created_at')
+
+        select_columns = [col for col in select_columns if col in available]
+        if not select_columns:
+            conn.close()
+            return pd.DataFrame()
+
+        order_clause = " ORDER BY alert_created_at DESC" if 'alert_created_at' in available else ""
+        query = f"SELECT {', '.join(select_columns)} FROM reorder_alerts{order_clause} LIMIT 100;"
         alerts_df = pd.read_sql_query(query, conn)
         conn.close()
         return alerts_df
@@ -285,6 +308,13 @@ for col, default in {
 
 if alerts.empty:
     st.warning("⚠️ No alert data available. Please run the ML pipeline first.")
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        st.caption(f"Database file found: {os.path.exists(DB_PATH)}")
+        st.caption(f"Alert rows in DB: {pd.read_sql_query('SELECT COUNT(*) as cnt FROM reorder_alerts', conn).iloc[0]['cnt']}")
+        conn.close()
+    except Exception:
+        pass
     st.stop()
 
 # ========================
