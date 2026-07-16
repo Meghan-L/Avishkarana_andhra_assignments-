@@ -72,9 +72,13 @@ DDL_SCRIPTS = {
             alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
             product_id INTEGER NOT NULL,
             product_name TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'Unknown',
             reorder_point INTEGER NOT NULL,
             current_inventory INTEGER NOT NULL,
             predicted_demand_7day INTEGER NOT NULL,
+            days_inventory_remaining INTEGER NOT NULL DEFAULT 0,
+            lead_time_days INTEGER NOT NULL DEFAULT 7,
+            safety_stock_units INTEGER NOT NULL DEFAULT 50,
             alert_status TEXT NOT NULL,
             action_required INTEGER DEFAULT 1,
             alert_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -88,7 +92,10 @@ def initialize_database():
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        
+
+        for table_name in DDL_SCRIPTS.keys():
+            cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+
         for table_name, ddl_script in DDL_SCRIPTS.items():
             logger.info(f"Creating table: {table_name}")
             cursor.execute(ddl_script)

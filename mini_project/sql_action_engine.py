@@ -181,12 +181,18 @@ class SQLActionEngine:
         try:
             logger.info("Saving alerts to database...")
             
-            alerts_data = alerts_df[[
-                'product_id', 'product_name', 'reorder_point', 
-                'current_inventory', 'predicted_demand_7day', 
-                'alert_status', 'action_required'
-            ]].copy()
-            
+            required_columns = [
+                'product_id', 'product_name', 'category', 'reorder_point',
+                'current_inventory', 'predicted_demand_7day',
+                'days_inventory_remaining', 'lead_time_days',
+                'safety_stock_units', 'alert_status', 'action_required'
+            ]
+
+            for col in required_columns:
+                if col not in alerts_df.columns:
+                    alerts_df[col] = 0
+
+            alerts_data = alerts_df[required_columns].copy()
             alerts_data['alert_created_at'] = datetime.now()
             
             with sqlite3.connect(DB_PATH) as conn:
