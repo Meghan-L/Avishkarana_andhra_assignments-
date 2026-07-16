@@ -14,14 +14,19 @@ import plotly.graph_objects as go
 import plotly.express as px
 from sqlalchemy import create_engine
 import logging
-from sql_action_engine import build_simple_forecasts_dataframe, build_simple_alerts_dataframe
+from sql_action_engine import (
+    build_simple_forecasts_dataframe,
+    build_simple_alerts_dataframe,
+    execute_action_engine,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Database configuration
-DB_PATH = "retail_demand_forecast.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "retail_demand_forecast.db")
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 
@@ -277,7 +282,7 @@ def get_db_connection():
     """Create database connection (cached)."""
     return create_engine(DATABASE_URL)
 
-@st.cache_data(ttl=3600)
+
 def load_alerts():
     """Load reorder alerts from database with compatibility for the current schema."""
     ensure_database_ready()
@@ -313,13 +318,18 @@ def load_alerts():
         alerts_df = pd.read_sql_query(query, conn)
         conn.close()
         if alerts_df.empty:
+            try:
+                generated = execute_action_engine()
+                if generated and generated.get('alerts') is not None and not generated['alerts'].empty:
+                    return generated['alerts']
+            except Exception as exc:
+                logger.warning(f"Alert generation fallback failed: {exc}")
             return build_simple_alerts_dataframe()
         return alerts_df
     except Exception as e:
         st.error(f"Error loading alerts: {str(e)}")
         return pd.DataFrame()
 
-@st.cache_data(ttl=3600)
 def load_forecasts():
     """Load demand forecasts from database."""
     ensure_database_ready()
@@ -342,7 +352,6 @@ def load_forecasts():
         st.error(f"Error loading forecasts: {str(e)}")
         return pd.DataFrame()
 
-@st.cache_data(ttl=3600)
 def load_historical_sales():
     """Load historical sales data for comparison."""
     ensure_database_ready()
@@ -365,7 +374,6 @@ def load_historical_sales():
         st.error(f"Error loading sales data: {str(e)}")
         return pd.DataFrame()
 
-@st.cache_data(ttl=3600)
 def load_products():
     """Load product catalog."""
     ensure_database_ready()
